@@ -17,16 +17,10 @@ void QRController::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
 {
     // Pega os parâmetros 'data' e 'file_name'
     std::string data = req->getParameter("data");
-    std::string fileName = req->getParameter("file_name");
 
     // Verifica se os parâmetros são válidos e retorna erro caso contrário
     if (data.empty()) {
         callback(createErrorResponse(drogon::HttpStatusCode::k400BadRequest, "Parametro 'data' não fornecido."));
-        return;
-    }
-
-    if (fileName.empty()) {
-        callback(createErrorResponse(drogon::HttpStatusCode::k400BadRequest, "Parametro 'file_name' não fornecido."));
         return;
     }
 
