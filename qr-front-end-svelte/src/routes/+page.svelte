@@ -33,47 +33,40 @@
     }
   </script>
   
-  <main>
-    <h1>QR CODE GENERATOR</h1>
-  
-    <div>
-      <label for="data">Texto para QR Code:</label>
-      <input id="data" type="text" bind:value={data} placeholder="Digite algo..." />
+  <main class="flex flex-col w-full justify-center items-center gap-8 mx-40">
+
+    <!-- Title -->
+    <h1 class="font-bold uppercase text-3xl">qr code generator</h1>
+
+    <!-- QR Infos -->
+    <div class="flex w-full flex-col justify-center items-center rounded-xl p-8 bg-white ">
+    <!-- QR Inputs -->
+      <div class="w-full rounded-2xl p-8">
+        <div class="flex flex-col gap-4">
+          <input class="py-4 px-8 rounded-full outline-1" id="data" type="text" bind:value={data} placeholder="Digite o texto" />
+          <input class="py-4 px-8 rounded-full outline-1" id="fileName" type="text" bind:value={fileName} placeholder="Ex: meu_qrcode" />
+        </div>
+      </div>
+
+      <!-- Generation Button -->
+      <div>
+        <button class="p-4 rounded-full outline-1" on:click={generateQRCode}>Gerar QR Code</button>
+      </div>
+    
+      <!-- QR Error Message -->
+      {#if errorMessage}
+        <p class="font-bold py-5 text-red-400">{errorMessage}</p>
+      {/if}
+      
+      <!-- QR CODE -->
+      {#if qrImage}
+        <div class="flex flex-col gap-8 py-8">
+          <img src={qrImage} alt="QR Code" />
+        </div>
+      {/if}
     </div>
-  
-    <div>
-      <label for="fileName">Nome do Arquivo:</label>
-      <input id="fileName" type="text" bind:value={fileName} placeholder="Ex: meu_qrcode" />
-    </div>
-  
-    <button on:click={generateQRCode}>Gerar QR Code</button>
-  
-    {#if errorMessage}
-      <p class="error">{errorMessage}</p>
-    {/if}
-  
-    {#if qrImage}
-      <h2>QR Code Gerado:</h2>
-      <img src={qrImage} alt="QR Code" />
-    {/if}
   </main>
   
   <style>
-
-    main{
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    .error {
-      color: red;
-    }
-  
-    img {
-      margin-top: 20px;
-      width: 200px;
-      height: 200px;
-      object-fit: contain;
-    }
   </style>
   
