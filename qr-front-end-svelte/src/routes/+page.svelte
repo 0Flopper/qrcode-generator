@@ -2,20 +2,19 @@
   import { onMount } from 'svelte';
 
   let data = 'Nothing to see here';
-  let fileName = 'example';
   let qrImage = null;
 
   // Função para gerar o QR Code
   async function generateQRCode() {
     const currentImage = qrImage;  // Mantém a imagem atual visível enquanto a nova é gerada.
 
-    if (!data.trim() || !fileName.trim()) {
+    if (!data.trim()) {
       return;
     }
 
     try {
       // Faz a requisição GET para o back-end
-      const response = await fetch(`http://localhost:5555/qrcode?data=${encodeURIComponent(data)}&file_name=${encodeURIComponent(fileName)}`);
+      const response = await fetch(`http://localhost:5555/qrcode?data=${encodeURIComponent(data)}}`);
 
       if (!response.ok) {
         throw new Error('Erro ao gerar o QR Code');
@@ -33,7 +32,7 @@
 
   // Reatividade do Svelte: sempre que data ou fileName mudarem, chamamos generateQRCode
   $: {
-    if (data.trim() && fileName.trim()) {
+    if (data.trim()) {
       generateQRCode();
     }
   }
@@ -57,11 +56,6 @@
           class="py-4 px-8 rounded-full outline-1"
           bind:value={data}
           placeholder="Digite o texto"
-        />
-        <input
-          class="py-4 px-8 rounded-full outline-1"
-          bind:value={fileName}
-          placeholder="Ex: meu_qrcode"
         />
       </div>
     </div>
