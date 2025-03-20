@@ -1,71 +1,76 @@
+// Função que salva o QR Code em formato PNG e retorna o caminho do arquivo salvo
 #include "PNGWriterService.h"
 #include <iostream>
 
-// Função que salva o QR Code em formato PNG e retorna os dados da imagem em um buffer
-std::vector<char> PNGWriterService::save(QRcode* qrcode) {
-    // Cria um buffer para armazenar os dados da imagem PNG gerada
-    std::vector<char> pngBuffer;
-
-    // Verifica se o QR Code fornecido é válido
+std::string PNGWriterService::saveToPNG(QRcode* qrcode, const std::string& fileName, int scale) {
     if (!qrcode) {
-        std::cerr << "QR Code inválido!" << std::endl;
-        return pngBuffer;  // Retorna um buffer vazio em caso de erro
+        std::cerr << "QR code inválido!" << std::endl;
+        return "";
     }
 
-    // Calcula o tamanho da imagem PNG com base no tamanho do QR Code
-    int width = qrcode->width;
-    int size = width * 10;  // Tamanho da imagem PNG será 10 vezes o tamanho do QR Code
+    // Definir caminho do arquivo (garantindo que termine com .png)
+    std::string filePath = "/tmp/" + fileName;
+    if (filePath.find(".png") == std::string::npos) {
+        filePath += ".png";  // Adiciona extensão caso não tenha
+    }
 
-    // Cria a estrutura PNG necessária para a escrita do arquivo PNG
-    png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    FILE* fp = fopen(filePath.c_str(), "wb");
+    if (!fp) {
+        std::cerr << "Erro ao abrir arquivo: " << filePath << std::endl;
+        return "";
+    }
+
+    png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    if (!png) {
+        std::cerr << "Erro ao criar estrutura PNG!" << std::endl;
+        fclose(fp);
+        return "";
+    }
+
     png_infop info = png_create_info_struct(png);
-
-    // Verifica se as estruturas foram criadas corretamente
-    if (!png || !info) {
-        // Libera as estruturas e exibe um erro caso falhe
-        png_destroy_write_struct(&png, &info);
-        std::cerr << "Erro ao criar estrutura PNG" << std::endl;
-        return pngBuffer;  // Retorna um buffer vazio em caso de falha
+    if (!info) {
+        std::cerr << "Erro ao criar info do PNG!" << std::endl;
+        png_destroy_write_struct(&png, nullptr);
+        fclose(fp);
+        return "";
     }
 
-    // Define a compressão máxima para a imagem PNG
-    png_set_compression_level(png, 9);
+    if (setjmp(png_jmpbuf(png))) {
+        std::cerr << "Erro ao inicializar escrita PNG!" << std::endl;
+        png_destroy_write_struct(&png, &info);
+        fclose(fp);
+        return "";
+    }
 
-    // Define o cabeçalho da imagem PNG
-    png_set_IHDR(png, info, size, size, 8, PNG_COLOR_TYPE_GRAY, PNG_INTERLACE_NONE,
-                 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+    png_init_io(png, fp);
 
-    // Define uma função personalizada de escrita que armazena os dados no buffer
-    png_set_write_fn(png, &pngBuffer, [](png_structp png, png_bytep data, png_size_t length) {
-        std::vector<char>* buffer = static_cast<std::vector<char>*>(png_get_io_ptr(png));
-        buffer->insert(buffer->end(), data, data + length);  // Insere os dados no buffer
-    }, nullptr);
+    int size = qrcode->width;
+    int imageSize = size * scale;
 
-    // Aloca memória para armazenar as linhas da imagem PNG
-    png_bytepp row_pointers = (png_bytepp)png_malloc(png, size * sizeof(png_bytep));
+    png_set_IHDR(png, info, imageSize, imageSize, 8, PNG_COLOR_TYPE_GRAY, 
+                 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
-    // Preenche as linhas da imagem PNG com os dados do QR Code
-    for (int y = 0; y < size; y++) {
-        row_pointers[y] = (png_bytep)png_malloc(png, size);
-        for (int x = 0; x < size; x++) {
-            // Define a cor do pixel com base nos dados do QR Code
-            row_pointers[y][x] = (qrcode->data[(y / 10) * width + (x / 10)] & 1) ? 0 : 255;
+    png_write_info(png, info);
+
+    std::vector<png_byte> row(imageSize, 255);  // Linha branca
+
+    for (int y = 0; y < size; ++y) {
+        for (int i = 0; i < scale; ++i) {  // Duplicar a linha `scale` vezes
+            std::vector<png_byte> row(imageSize, 255);  // Linha branca
+            for (int x = 0; x < size; ++x) {
+                bool isBlack = qrcode->data[y * size + x] & 1;
+                for (int j = 0; j < scale; ++j) {
+                    row[(x * scale) + j] = isBlack ? 0 : 255;
+                }
+            }
+            png_write_row(png, row.data());
         }
     }
+    
 
-    // Define as linhas da imagem e escreve o arquivo PNG
-    png_set_rows(png, info, row_pointers);
-    png_write_png(png, info, PNG_TRANSFORM_IDENTITY, NULL);
-
-    // Libera a memória alocada para as linhas da imagem PNG
-    for (int y = 0; y < size; y++) {
-        png_free(png, row_pointers[y]);
-    }
-    png_free(png, row_pointers);
-
-    // Libera as estruturas PNG após a escrita
+    png_write_end(png, nullptr);
     png_destroy_write_struct(&png, &info);
+    fclose(fp);
 
-    // Retorna o buffer contendo os dados da imagem PNG
-    return pngBuffer;
+    return filePath;
 }

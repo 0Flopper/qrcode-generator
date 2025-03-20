@@ -1,19 +1,19 @@
 #pragma once
 
-#include <drogon/HttpSimpleController.h>
+//#include <drogon/HttpSimpleController.h>
+#include <drogon/HttpController.h>
 
 using namespace drogon;
 
-class QRController : public drogon::HttpSimpleController<QRController>
+class QRController : public drogon::HttpController<QRController>
 {
   public:
-    void asyncHandleHttpRequest(const HttpRequestPtr& req, 
-      std::function<void (const HttpResponsePtr &)> &&callback) override;
-      
-    PATH_LIST_BEGIN
-      // list path definitions here;
-      PATH_ADD("/qrcode", Get);
-    PATH_LIST_END
+
+    METHOD_LIST_BEGIN
+        ADD_METHOD_TO(QRController::downloadQRCodePNG, "/download/qrcode/png", Get);  
+    METHOD_LIST_END
+
+    void downloadQRCodePNG(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback);
 
     private:
     // Função auxiliar para criar e configurar uma resposta de erro
