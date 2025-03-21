@@ -1,6 +1,6 @@
 #include "QRController.h"
 #include "services/QRGeneratorService.h"
-#include "services/PNGWriterService.h"
+#include "services/PNGDownloadService.h"
 #include "services/QRPreviewService.h"
 #include "api/CorsUtils.h"
 
