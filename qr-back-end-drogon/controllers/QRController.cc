@@ -1,6 +1,7 @@
 #include "QRController.h"
 #include "services/QRGeneratorService.h"
 #include "services/PNGWriterService.h"
+#include "services/QRPreviewService.h"
 #include "api/CorsUtils.h"
 
 // Função auxiliar para criar e configurar uma resposta de erro
@@ -10,6 +11,45 @@ drogon::HttpResponsePtr QRController::createErrorResponse(drogon::HttpStatusCode
     res->setBody(message);
     addCorsHeaders(res);  // Adiciona os cabeçalhos CORS para a resposta de erro
     return res;
+}
+
+void QRController::previewQRCode(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback)
+{
+    std::string data = req->getParameter("data");
+
+    // Verifica se há dados na URL
+    if (data.empty()) {
+        callback(createErrorResponse(drogon::HttpStatusCode::k400BadRequest, "Parâmetros inválidos ou ausentes."));
+        return;
+    }
+
+    // Gera o QR Code com o texto recebido
+    auto qrcode = std::unique_ptr<QRcode, decltype(&QRcode_free)>(QRGeneratorService::generate(data), QRcode_free);
+
+    if (!qrcode) {
+        callback(createErrorResponse(drogon::HttpStatusCode::k500InternalServerError, "Erro ao gerar QR Code"));
+        return;
+    }
+
+    QRPreviewService qrPreviewService;
+    std::vector<png_byte> pngBuffer = qrPreviewService.generateQRPreview(qrcode.get());
+
+    // Verifica se a imagem foi gerada com sucesso
+    if (pngBuffer.empty()) {
+        callback(createErrorResponse(drogon::HttpStatusCode::k500InternalServerError, "Erro ao gerar PNG do QR Code"));
+        return;
+    }
+
+    std::cout << "QR Code gerado com sucesso!" << std::endl;
+    std::cout << "Tamanho do QR Code: " << qrcode->width << "x" << qrcode->width << std::endl;
+
+    // Prepara a resposta HTTP com o conteúdo do PNG
+    auto res = drogon::HttpResponse::newHttpResponse();
+    addCorsHeaders(res);
+    res->setContentTypeCode(drogon::CT_IMAGE_PNG);
+    res->setBody(std::string(pngBuffer.begin(), pngBuffer.end()));
+    callback(res);
+    
 }
 
 void QRController::downloadQRCodePNG(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback)
@@ -43,6 +83,7 @@ void QRController::downloadQRCodePNG(const drogon::HttpRequestPtr &req, std::fun
         return;
     }    
 
+    // Gera o PNG
     std::string savedPath = PNGWriterService::saveToPNG(qrcode.get(), fileName, size);
 
     if (savedPath.empty()) {
@@ -55,50 +96,17 @@ void QRController::downloadQRCodePNG(const drogon::HttpRequestPtr &req, std::fun
     std::cout << "Tamanho do QR Code: " << qrcode->width << "x" << qrcode->width << std::endl;
 
     // Envia a resposta com o arquivo PNG gerado
-
-    auto resp = drogon::HttpResponse::newFileResponse(
+    auto res = drogon::HttpResponse::newFileResponse(
         savedPath,                          // Caminho do arquivo (std::string)
         fileName,         // Nome do arquivo como std::string
         drogon::CT_IMAGE_PNG               // Tipo MIME correto para PNG
     );
-    callback(resp);
+    addCorsHeaders(res);
+    callback(res);
 
-    std::remove(savedPath.c_str()); // Remove arquivo após o envio
-}
-
-void QRController::downloadQRCodeSVG(const drogon::HttpRequestPtr &req, std::function<void(const drogon::HttpResponsePtr &)> &&callback)
-{
-    std::string data = req->getParameter("data");
-    std::string fileName = req->getParameter("filename");
-    std::string size = req->getParameter("size");
-
-    // URL parameters verifications
-    if (data.empty()) {
-        callback(createErrorResponse(drogon::HttpStatusCode::k400BadRequest, "Parametro 'data' não fornecido."));
-        return;
-    }
-
-    if (fileName.empty()) {
-        callback(createErrorResponse(drogon::HttpStatusCode::k400BadRequest, "Parametro 'filename' não fornecido."));
-        return;
-    }
-
-    if (size.empty()) {
-        callback(createErrorResponse(drogon::HttpStatusCode::k400BadRequest, "Parametro 'size' não fornecido."));
-        return;
-    }
-
-    // Gera o QR Code com o texto recebido
-    auto qrcode = std::unique_ptr<QRcode, decltype(&QRcode_free)>(QRGeneratorService::generate(data), QRcode_free);
-
-    if (!qrcode) {
-        callback(createErrorResponse(drogon::HttpStatusCode::k500InternalServerError, "Erro ao gerar QR Code SVG"));
-        return;
-    }
-
-    // Informações do QR Code gerado
-    std::cout << "QR Code PNG gerado com sucesso!" << std::endl;
-    std::cout << "Tamanho do QR Code: " << qrcode->width << "x" << qrcode->width << std::endl;
+    if (std::filesystem::exists(savedPath)) {
+        std::remove(savedPath.c_str());  // Remove o arquivo após o envio
+    }    
 }
 
 /* void QRController::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req, 

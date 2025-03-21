@@ -136,6 +136,15 @@ CMakeUserPresets.json
 # *.iml
 # *.ipr
 
+# Build
+/build/
+*.exe
+*.dll
+*.so
+*.a
+*.o
+
+
 # CMake
 cmake-build-*/
 
