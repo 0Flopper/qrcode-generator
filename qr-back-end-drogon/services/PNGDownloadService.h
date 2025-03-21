@@ -1,12 +1,11 @@
-#ifndef PNG_WRITER_SERVICE_H
-#define PNG_WRITER_SERVICE_H
+#ifndef PNG_DOWNLOAD_SERVICE_H
+#define PNG_DOWNLOAD_SERVICE_H
 
 #include "qrencode.h"
 #include <png.h>
-#include <vector>
 #include <string>
 
-class PNGWriterService {
+class PNGDownloadService {
 public:
     static std::string saveToPNG(QRcode* qrcode, const std::string& filePath, int scale);
 };

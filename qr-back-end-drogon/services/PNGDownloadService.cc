@@ -1,8 +1,9 @@
 // Função que salva o QR Code em formato PNG e retorna o caminho do arquivo salvo
-#include "PNGWriterService.h"
+#include "PNGDownloadService.h"
 #include <iostream>
+#include <vector>
 
-std::string PNGWriterService::saveToPNG(QRcode* qrcode, const std::string& fileName, int scale) {
+std::string PNGDownloadService::saveToPNG(QRcode* qrcode, const std::string& fileName, int scale) {
     if (!qrcode) {
         std::cerr << "QR code inválido!" << std::endl;
         return "";
