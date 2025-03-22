@@ -22,7 +22,7 @@ std::vector<png_byte> QRPreviewService::generateQRPreview(QRcode* qrcode) {
         return emptyResult;
     }
     
-    int scale = 50;
+    int scale = 10;
     int size = qrcode->width;
     int imageSize = size * scale;
 

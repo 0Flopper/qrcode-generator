@@ -84,7 +84,7 @@ void QRController::downloadQRCodePNG(const drogon::HttpRequestPtr &req, std::fun
     }    
 
     // Gera o PNG
-    std::string savedPath = PNGWriterService::saveToPNG(qrcode.get(), fileName, size);
+    std::string savedPath = PNGDownloadService::saveToPNG(qrcode.get(), fileName, size);
 
     if (savedPath.empty()) {
         callback(createErrorResponse(drogon::HttpStatusCode::k500InternalServerError, "Erro ao salvar QR Code."));
@@ -92,7 +92,7 @@ void QRController::downloadQRCodePNG(const drogon::HttpRequestPtr &req, std::fun
     }
 
     // Informações do QR Code gerado
-    std::cout << "QR Code PNG gerado com sucesso!" << std::endl;
+    std::cout << "gerado com sucesso!" << std::endl;
     std::cout << "Tamanho do QR Code: " << qrcode->width << "x" << qrcode->width << std::endl;
 
     // Envia a resposta com o arquivo PNG gerado
