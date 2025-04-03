@@ -54,12 +54,14 @@ else ()
 endif ()
 
 # Adicionar diretórios de fontes
-aux_source_directory(controllers CTL_SRC)
-aux_source_directory(filters FILTER_SRC)
-aux_source_directory(plugins PLUGIN_SRC)
-aux_source_directory(models MODEL_SRC)
-aux_source_directory(services SERVICE_SRC)
-aux_source_directory(api API_SRC)
+aux_source_directory(src/controllers CTL_SRC)
+aux_source_directory(src/filters FILTER_SRC)
+aux_source_directory(src/plugins PLUGIN_SRC)
+aux_source_directory(src/models MODEL_SRC)
+aux_source_directory(src/services SERVICE_SRC)
+aux_source_directory(src/utils UTILS_SRC)
+aux_source_directory(src/interfaces INTERFACES_SRC)
+aux_source_directory(src/implementations IMPLEMENTATIONS_SRC)
 
 drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
                     ${CMAKE_CURRENT_BINARY_DIR})
@@ -75,7 +77,9 @@ target_sources(${PROJECT_NAME}
                ${PLUGIN_SRC}
                ${MODEL_SRC}
                ${SERVICE_SRC}
-               ${API_SRC})
+               ${UTILS_SRC}
+               ${INTERFACES_SRC}
+               ${IMPLEMENTATIONS_SRC})
 
 # ##############################################################################
 # Descomente a linha a seguir para carregar views dinamicamente

@@ -1,5 +1,4 @@
-#include "api/CorsUtils.h"
-#include <drogon/HttpResponse.h>
+#include "CorsUtils.h"
 
 void addCorsHeaders(const drogon::HttpResponsePtr& res) {
     res->addHeader("Access-Control-Allow-Origin", "*");
