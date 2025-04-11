@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   let data = '';
+  let format = '';
   let qrImage = null;
   let showModal = false;
   let scale = 10; // QR Quality
@@ -31,6 +32,18 @@
     link.click();
   }
 
+  async function downloadQRSvg() {
+    const url = `http://localhost:5555/generate/download/svg?data=${encodeURIComponent(data)}&scale=${encodeURIComponent(scale)}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to download QR Code');
+    
+    const blob = await response.blob();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'qrcode.svg';
+    link.click();
+  }
+
   $: if (data.trim()) {
     generateQRPreview();
   }
@@ -54,11 +67,22 @@
 
     {#if qrImage}
       <div class="flex flex-col gap-8 items-center">
-        <img class="w-80" src={qrImage} alt="QR Code" />
+        <img class="w-80 h-80" src={qrImage} alt="QR Code" />
 
         <!-- PNG Button -->
-        <button on:click={() => showModal = true} class="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 cursor-pointer">
+        <button on:click={() =>{
+          format = 'png';
+          showModal = true;
+          }} 
+          class="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 cursor-pointer">
           PNG
+        </button>
+        <button on:click={() =>{
+          format = 'svg';
+          showModal = true;
+          }} 
+          class="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 cursor-pointer">
+          SVG
         </button>
       </div>
     {/if}
@@ -90,7 +114,10 @@
       <!-- Botões do Modal -->
       <div class="flex gap-4">
         <!-- Download -->
-        <button on:click={downloadQRPng} 
+        <button on:click={() =>{
+          if(format === 'png') downloadQRPng();
+          if(format === 'svg') downloadQRSvg();
+        }} 
           class="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 cursor-pointer">
           Download
         </button>
@@ -106,4 +133,7 @@
 {/if}
 
 <style>
+  input[type="range"] {
+    accent-color: #2563eb; /* Tailwind blue-600 */
+  }
 </style>
