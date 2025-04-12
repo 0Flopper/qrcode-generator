@@ -1,53 +1,24 @@
 <script>
-  import { onMount } from 'svelte';
+  import { getQrPreview, downloadQr } from '../services/qrService';
+
   let data = '';
-  let format = '';
   let qrImage = null;
   let showModal = false;
-  let scale = 10; // QR Quality
-
-  async function generateQRPreview() {
-    if (!data || !data.trim()) return;
-    
-    try {
-      const response = await fetch(`http://localhost:5555/generate?data=${encodeURIComponent(data)}`);
-      if (!response.ok) throw new Error('Failed to generate QR Code');
-
-      const blob = await response.blob();
-      qrImage = URL.createObjectURL(blob);
-    } catch (error) {
-      console.error(error.message);
-    }
-  }
-
-  async function downloadQRPng() {
-    const url = `http://localhost:5555/generate/download/png?data=${encodeURIComponent(data)}&scale=${encodeURIComponent(scale)}`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to download QR Code');
-    
-    const blob = await response.blob();
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'qrcode.png';
-    link.click();
-  }
-
-  async function downloadQRSvg() {
-    const url = `http://localhost:5555/generate/download/svg?data=${encodeURIComponent(data)}&scale=${encodeURIComponent(scale)}`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to download QR Code');
-    
-    const blob = await response.blob();
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'qrcode.svg';
-    link.click();
-  }
+  let scale = 10;
+  let format = '';
 
   $: if (data.trim()) {
-    generateQRPreview();
+    getQrPreview(data)
+      .then(blobUrl => qrImage = blobUrl)
+      .catch(error => console.error(error.message));
+  }
+
+  function handleDownload() {
+    downloadQr(format, data, scale)
+      .catch(error => console.error(error.message));
   }
 </script>
+
 
 <main class="flex flex-col w-full h-full justify-center items-center gap-8 mx-40">
   <!-- Title -->
@@ -114,10 +85,7 @@
       <!-- Botões do Modal -->
       <div class="flex gap-4">
         <!-- Download -->
-        <button on:click={() =>{
-          if(format === 'png') downloadQRPng();
-          if(format === 'svg') downloadQRSvg();
-        }} 
+        <button on:click={handleDownload} 
           class="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 cursor-pointer">
           Download
         </button>
@@ -133,7 +101,4 @@
 {/if}
 
 <style>
-  input[type="range"] {
-    accent-color: #2563eb; /* Tailwind blue-600 */
-  }
 </style>
